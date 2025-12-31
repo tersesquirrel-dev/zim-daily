@@ -1,4 +1,4 @@
 ======= [% strftime("%Y-%m-%d %A", daily_plugin.date) %] =======
 
-===== Notes: =====
+===== Notes =====
 [% place_cursor() %]
