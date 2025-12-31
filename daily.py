@@ -44,7 +44,7 @@ logger = logging.getLogger('zim.plugins.daily')
 KEYVALS_ENTER = list(map(Gdk.keyval_from_name, ('Return', 'KP_Enter', 'ISO_Enter')))
 KEYVALS_SPACE = (Gdk.unicode_to_keyval(ord(' ')),)
 
-date_path_re = re.compile(r'^\d{4}-\d{2}-\d{2} \w+$')
+date_path_re = re.compile(r'^(.*:)?\d{4}-\d{2}-\d{2} \w+$')
 
 
 def daterange_from_path(path):
@@ -58,7 +58,7 @@ def daterange_from_path(path):
 	'''
 	if date_path_re.match(path.name):
 		# Parse format: YYYY-MM-DD DayName
-		date_part = path.name.split(' ')[0]  # Get YYYY-MM-DD part
+		date_part = path.name.split(':')[-1].split(' ')[0]  # Get YYYY-MM-DD part
 		year, month, day = list(map(int, date_part.split('-')))
 		try:
 			date = datetime.date(year, month, day)
@@ -92,6 +92,7 @@ Also adds a calendar widget to access these pages.
 
 	plugin_notebook_properties = (
 		('namespace', 'namespace', _('Section'), Path(':Daily')), # T: input label
+		('template', 'string', _('Template'), 'Daily'), # T: input label
 	)
 
 	def path_from_date(self, notebook, date):
@@ -158,8 +159,7 @@ class DailyNotebookExtension(NotebookExtension):
 	def on_get_page_template(self, notebook, path):
 		properties = self.plugin.notebook_properties(notebook)
 		if path.ischild(properties['namespace']) and daterange_from_path(path):
-			# TODO: Check if daily file exists and if not create it with default formatting
-			return 'Daily'
+			return properties['template']
 		else:
 			return None
 
