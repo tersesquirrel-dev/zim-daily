@@ -296,7 +296,7 @@ class Calendar(Gtk.Calendar):
 
 class CalendarWidget(Gtk.VBox, WindowSidePaneWidget):
 
-	title = _('_Daily') # T: side pane title
+	title = _('D_aily') # T: side pane title
 
 	def __init__(self, plugin, notebook, navigation):
 		GObject.GObject.__init__(self)
