@@ -232,11 +232,25 @@ class DailyNotebookViewExtension(NotebookViewExtension):
 		else:
 			return True
 
-	@action(_('To_day'), accelerator='<Alt>D', menuhints='go') # T: menu item
+	@action(_('Go to Today'), accelerator='<Ctrl><Shift>D', menuhints='go') # T: menu item
 	def go_page_today(self):
 		today = datetime.date.today()
 		path = self.plugin.path_from_date(self.pageview.notebook, today)
 		anchor = today.strftime('%Y-%m-%d %A')  # e.g., "2025-12-30 Tuesday"
+		self.navigation.open_page(path, anchor, anchor_fail_silent=True)
+
+	@action(_('Go to Tomorrow'), accelerator='<Ctrl><Shift>T', menuhints='go') # T: menu item
+	def go_page_tomorrow(self):
+		tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+		path = self.plugin.path_from_date(self.pageview.notebook, tomorrow)
+		anchor = tomorrow.strftime('%Y-%m-%d %A')  # e.g., "2025-12-31 Wednesday"
+		self.navigation.open_page(path, anchor, anchor_fail_silent=True)
+
+	@action(_('Go to Yesterday'), accelerator='<Ctrl><Shift>Y', menuhints='go') # T: menu item
+	def go_page_yesterday(self):
+		yesterday = datetime.date.today() - datetime.timedelta(days=1)
+		path = self.plugin.path_from_date(self.pageview.notebook, yesterday)
+		anchor = yesterday.strftime('%Y-%m-%d %A')  # e.g., "2025-12-29 Monday"
 		self.navigation.open_page(path, anchor, anchor_fail_silent=True)
 
 
