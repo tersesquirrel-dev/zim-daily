@@ -92,7 +92,7 @@ Also adds a calendar widget to access these pages.
 
 	plugin_notebook_properties = (
 		('namespace', 'namespace', _('Section'), Path(':Daily')), # T: input label
-		('template', 'string', _('Template'), 'Daily'), # T: input label
+		('template', 'string', _('Template'), 'Default'), # T: input label
 	)
 
 	def path_from_date(self, notebook, date):

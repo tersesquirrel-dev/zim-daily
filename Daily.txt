@@ -1,0 +1,4 @@
+======= [% strftime("%Y-%m-%d %A", daily_plugin.date) %] =======
+
+===== Notes: =====
+[% place_cursor() %]
