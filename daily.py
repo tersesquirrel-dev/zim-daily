@@ -19,7 +19,6 @@ from zim.plugins import PluginClass
 from zim.actions import action
 from zim.signals import SignalHandler, ConnectorMixin
 import zim.datetimetz as datetime
-from zim.datetimetz import dates_for_week, weekcalendar
 from zim.notebook import Path, NotebookExtension
 from zim.notebook.index import IndexNotFoundError
 from zim.templates.expression import ExpressionFunction
@@ -46,16 +45,13 @@ KEYVALS_ENTER = list(map(Gdk.keyval_from_name, ('Return', 'KP_Enter', 'ISO_Enter
 KEYVALS_SPACE = (Gdk.unicode_to_keyval(ord(' ')),)
 
 date_path_re = re.compile(r'^(.*:)?\d{4}:\d{1,2}:\d{2}$')
-week_path_re = re.compile(r'^(.*:)?\d{4}:Week \d{2}$')
-month_path_re = re.compile(r'^(.*:)?\d{4}:\d{1,2}$')
-year_path_re = re.compile(r'^(.*:)?\d{4}$')
 
 
 def daterange_from_path(path):
 	'''Determine the calendar dates mapped by a specific page
 	@param path: a L{Path} object
 	@returns: a 3-tuple of:
-	  - the page type (one of "C{day}", "C{week}", "C{month}", or "C{year}")
+	  - the page type (one of "C{day}")
 	  - a C{datetime.date} object for the start date
 	  - a C{datetime.date} object for the end date
 	or C{None} when the page does not map a date
@@ -68,27 +64,6 @@ def daterange_from_path(path):
 		except ValueError:
 			return None # not a valid date
 		end_date = date
-	elif week_path_re.match(path.name):
-		type = 'week'
-		year, week = path.name.rsplit(':', 2)[-2:]
-		year, week = list(map(int, (year, week[5:]))) # Assumes "Week XX" string
-		date, end_date = dates_for_week(year, week)
-	elif month_path_re.match(path.name):
-		type = 'month'
-		year, month = list(map(int, path.name.rsplit(':', 2)[-2:]))
-		try:
-			date = datetime.date(year, month, 1)
-		except ValueError:
-			return None # not a valid month
-		if month == 12:
-			end_date = datetime.date(year, 12, 31)
-		else:
-			end_date = datetime.date(year, month + 1, 1) + datetime.timedelta(-1)
-	elif year_path_re.match(path.name):
-		type = 'year'
-		year = int(path.name.rsplit(':', 1)[-1])
-		date = datetime.date(year, 1, 1)
-		end_date = datetime.date(year, 12, 31)
 	else:
 		return None # Not a daily path
 	return type, date, end_date
@@ -108,12 +83,6 @@ Also adds a calendar widget to access these pages.
 		'help': 'Plugins:Daily',
 	}
 
-	global DAY, WEEK, MONTH, YEAR # Hack - to make sure translation is loaded
-	DAY = _('Day') # T: option value
-	WEEK = _('Week') # T: option value
-	MONTH = _('Month') # T: option value
-	YEAR = _('Year') # T: option value
-
 	plugin_preferences = (
 		# key, type, label, default
 		('pane', 'choice', _('Position in the window'), LEFT_PANE, PANE_POSITIONS), # T: preferences option
@@ -122,24 +91,12 @@ Also adds a calendar widget to access these pages.
 
 	plugin_notebook_properties = (
 		('namespace', 'namespace', _('Section'), Path(':Daily')), # T: input label
-		('granularity', 'choice', _('Use a page for each'), DAY, (DAY, WEEK, MONTH, YEAR)), # T: preferences option, values will be "Day", "Month", ...
 	)
 
 	def path_from_date(self, notebook, date):
 		'''Returns the path for a daily page for a specific date'''
 		properties = self.notebook_properties(notebook)
-		granularity = properties['granularity']
-
-		if granularity == DAY:
-			path = date.strftime('%Y:%m:%d')
-		elif granularity == WEEK:
-			year, week, day = weekcalendar(date)
-			path = '%i:Week %02i' % (year, week)
-		elif granularity == MONTH:
-			path = date.strftime('%Y:%m')
-		elif granularity == YEAR:
-			path = date.strftime('%Y')
-
+		path = date.strftime('%Y:%m:%d')
 		return properties['namespace'].child(path)
 
 	def path_for_month_from_date(self, notebook, date):
@@ -420,13 +377,9 @@ class CalendarWidget(Gtk.VBox, WindowSidePaneWidget):
 
 		dates = daterange_from_path(page)
 		if dates:
-			if dates[0] == 'year':
-				# Calendar is per month, so do not switch view for year page
-				pass
-			else:
-				cur_date = self.calendar.get_date()
-				if cur_date < dates[1] or cur_date > dates[2]:
-					self.calendar.select_date(dates[1])
+			cur_date = self.calendar.get_date()
+			if cur_date < dates[1] or cur_date > dates[2]:
+				self.calendar.select_date(dates[1])
 		else:
 			self.calendar.select_day(0)
 			self.treeview.get_selection().unselect_all()
