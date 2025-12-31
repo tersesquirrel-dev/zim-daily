@@ -57,7 +57,6 @@ def daterange_from_path(path):
 	or C{None} when the page does not map a date
 	'''
 	if date_path_re.match(path.name):
-		type = 'day'
 		# Parse format: YYYY-MM-DD DayName
 		date_part = path.name.split(' ')[0]  # Get YYYY-MM-DD part
 		year, month, day = list(map(int, date_part.split('-')))
@@ -237,7 +236,7 @@ class DailyNotebookViewExtension(NotebookViewExtension):
 	def go_page_today(self):
 		today = datetime.date.today()
 		path = self.plugin.path_from_date(self.pageview.notebook, today)
-		anchor = today.isoformat() # yyyy-mm-dd
+		anchor = today.strftime('%Y-%m-%d %A')  # e.g., "2025-12-30 Tuesday"
 		self.navigation.open_page(path, anchor, anchor_fail_silent=True)
 
 
