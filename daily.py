@@ -44,7 +44,7 @@ logger = logging.getLogger('zim.plugins.daily')
 KEYVALS_ENTER = list(map(Gdk.keyval_from_name, ('Return', 'KP_Enter', 'ISO_Enter')))
 KEYVALS_SPACE = (Gdk.unicode_to_keyval(ord(' ')),)
 
-date_path_re = re.compile(r'^(.*:)?\d{4}:\d{1,2}:\d{2}$')
+date_path_re = re.compile(r'^\d{4}-\d{2}-\d{2} \w+$')
 
 
 def daterange_from_path(path):
@@ -58,7 +58,9 @@ def daterange_from_path(path):
 	'''
 	if date_path_re.match(path.name):
 		type = 'day'
-		year, month, day = list(map(int, path.name.rsplit(':', 3)[-3:]))
+		# Parse format: YYYY-MM-DD DayName
+		date_part = path.name.split(' ')[0]  # Get YYYY-MM-DD part
+		year, month, day = list(map(int, date_part.split('-')))
 		try:
 			date = datetime.date(year, month, day)
 		except ValueError:
@@ -96,13 +98,14 @@ Also adds a calendar widget to access these pages.
 	def path_from_date(self, notebook, date):
 		'''Returns the path for a daily page for a specific date'''
 		properties = self.notebook_properties(notebook)
-		path = date.strftime('%Y:%m:%d')
-		return properties['namespace'].child(path)
+		month_namespace = date.strftime('%Y:%m %B')
+		daily_page = date.strftime('%Y-%m-%d %A')
+		return properties['namespace'].child(month_namespace).child(daily_page)
 
 	def path_for_month_from_date(self, notebook, date):
 		'''Returns the namespace path for a certain month'''
 		properties = self.notebook_properties(notebook)
-		return properties['namespace'].child(date.strftime('%Y:%m'))
+		return properties['namespace'].child(date.strftime('%Y:%m %B'))
 
 	def date_from_path(self, path):
 		'''Returns the date for a specific path or C{None}'''
@@ -156,6 +159,7 @@ class DailyNotebookExtension(NotebookExtension):
 	def on_get_page_template(self, notebook, path):
 		properties = self.plugin.notebook_properties(notebook)
 		if path.ischild(properties['namespace']) and daterange_from_path(path):
+			# TODO: Check if daily file exists and if not create it with default formatting
 			return 'Daily'
 		else:
 			return None
@@ -354,7 +358,7 @@ class CalendarWidget(Gtk.VBox, WindowSidePaneWidget):
 
 	def _refresh_label(self, *a):
 		#print "UPDATE LABEL %s" % id(self)
-		format = _('%A %d %B %Y').replace(' 0', ' ')
+		format = _('%d %B %Y').replace(' 0', ' ')
 			# T: strftime format for current date label
 		text = datetime.strftime(format, datetime.date.today())
 		self.label.set_text(text)
